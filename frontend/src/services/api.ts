@@ -1,7 +1,6 @@
-
 import axios from 'axios';
 
-// --- 他のファイルから参照される型定義 (これらを正しくexportする必要があります) ---
+// --- exportが必要な型定義 ---
 export interface User {
   id: string;
   email: string;
@@ -33,7 +32,7 @@ export interface AuthResponse {
   user: User;
 }
 
-// --- APIの設定 ---
+// --- APIの基本設定 ---
 const API_URL = import.meta.env.VITE_API_URL || 'https://full-stack-to-do-list-121l.onrender.com/api';
 
 const api = axios.create({
