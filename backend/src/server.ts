@@ -6,7 +6,8 @@ import authRoutes from './routes/auth';
 import projectRoutes from './routes/projects';
 import taskRoutes from './routes/tasks';
 import { setupWebSocket } from './utils/websocket';
-
+import { Request, Response } from 'express';
+import { Request, Response } from 'express';
 dotenv.config();
 
 const app = express();
@@ -23,10 +24,9 @@ app.use('/api/projects', projectRoutes);
 app.use('/api/tasks', taskRoutes);
 
 // Health check
-app.get('/api/health', (req, res) => {
+app.get('/api/health', (req: Request, res: Response) => { 
   res.json({ status: 'ok', message: 'Server is running' });
 });
-
 // Setup WebSocket
 setupWebSocket(server);
 
