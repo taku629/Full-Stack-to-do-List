@@ -102,9 +102,14 @@ router.get('/:id', authMiddleware, (req: AuthRequest, res: Response): void => {
   }
 });
 
-// 【修正箇所】タスクの更新処理（カンバン移動時のデータ消失防止）
+/**
+ * 【重要修正】タスクの更新処理
+ * フロントエンドから一部のデータ（statusのみ等）が送られてきても、
+ * 他のデータが消えないように「既存のデータ」を優先して保持するロジックに変更。
+ */
 router.put('/:id', authMiddleware, (req: AuthRequest, res: Response): void => {
   try {
+    // 1. 現在保存されているタスクデータを取得
     const task = datastore.getTaskById(req.params.id);
 
     if (!task) {
@@ -117,14 +122,17 @@ router.put('/:id', authMiddleware, (req: AuthRequest, res: Response): void => {
       return;
     }
 
+    // 2. リクエストボディから値を取り出す
     const { title, description, status, priority } = req.body;
 
-    // リクエストで送られてこなかった項目は、元のtaskの値を維持する
+    // 3. 更新用データの作成
+    // 値が送られてこない(undefined)場合や、空文字("")の場合は、既存の値を採用する
     const updatedTask = datastore.updateTask(req.params.id, {
-      title: title ?? task.title,
-      description: description ?? task.description,
-      status: status ?? task.status,
-      priority: priority ?? task.priority
+      title: (title !== undefined && title !== "") ? title : task.title,
+      description: (description !== undefined) ? description : task.description,
+      status: (status !== undefined && status !== "") ? status : task.status,
+      priority: (priority !== undefined && priority !== "") ? priority : task.priority,
+      updatedAt: new Date().toISOString() // 更新日時を最新にする
     });
 
     res.json(updatedTask);
