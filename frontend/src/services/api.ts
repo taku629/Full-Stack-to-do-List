@@ -1,15 +1,45 @@
+
 import axios from 'axios';
 
-// ... (Interface定義はそのまま)
+// --- 他のファイルから参照される型定義 (これらを正しくexportする必要があります) ---
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+}
 
-// 環境変数が読み込めない時のためのフォールバックを確実に設定
+export interface Project {
+  id: string;
+  name: string;
+  description: string;
+  userId: string;
+  createdAt: string;
+}
+
+export interface Task {
+  id: string;
+  title: string;
+  description: string;
+  status: 'todo' | 'in-progress' | 'done';
+  priority: 'low' | 'medium' | 'high';
+  projectId: string;
+  userId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AuthResponse {
+  token: string;
+  user: User;
+}
+
+// --- APIの設定 ---
 const API_URL = import.meta.env.VITE_API_URL || 'https://full-stack-to-do-list-121l.onrender.com/api';
 
 const api = axios.create({
   baseURL: API_URL,
 });
 
-// リクエスト送信時にトークンを付与
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
@@ -18,56 +48,59 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// エラー発生時のログ出力を強化
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    console.error('API Error:', error.response?.data || error.message);
-    return Promise.reject(error);
-  }
-);
-
 // --- 認証関連 ---
-export const register = async (email: string, password: string, name: string) => {
+export const register = async (email: string, password: string, name: string): Promise<AuthResponse> => {
   const response = await api.post('/auth/register', { email, password, name });
   return response.data;
 };
 
-export const login = async (email: string, password: string) => {
+export const login = async (email: string, password: string): Promise<AuthResponse> => {
   const response = await api.post('/auth/login', { email, password });
   return response.data;
 };
 
 // --- プロジェクト関連 ---
-export const getProjects = async () => {
+export const getProjects = async (): Promise<Project[]> => {
   const response = await api.get('/projects');
   return response.data;
 };
 
-export const createProject = async (name: string, description: string) => {
+export const createProject = async (name: string, description: string): Promise<Project> => {
   const response = await api.post('/projects', { name, description });
   return response.data;
 };
 
+export const updateProject = async (id: string, name: string, description: string): Promise<Project> => {
+  const response = await api.put(`/projects/${id}`, { name, description });
+  return response.data;
+};
+
+export const deleteProject = async (id: string): Promise<void> => {
+  await api.delete(`/projects/${id}`);
+};
+
 // --- タスク関連 ---
-export const getTasksByProject = async (projectId: string) => {
+export const getTasks = async (): Promise<Task[]> => {
+  const response = await api.get('/tasks');
+  return response.data;
+};
+
+export const getTasksByProject = async (projectId: string): Promise<Task[]> => {
   const response = await api.get(`/tasks/project/${projectId}`);
   return response.data;
 };
 
-export const createTask = async (task: any) => {
+export const createTask = async (task: Partial<Task>): Promise<Task> => {
   const response = await api.post('/tasks', task);
   return response.data;
 };
 
-// 【重要】更新処理
-export const updateTask = async (id: string, updates: any) => {
-  // updatesには { status: 'in-progress' } など、変更したい部分だけが入る
+export const updateTask = async (id: string, updates: Partial<Task>): Promise<Task> => {
   const response = await api.put(`/tasks/${id}`, updates);
   return response.data;
 };
 
-export const deleteTask = async (id: string) => {
+export const deleteTask = async (id: string): Promise<void> => {
   await api.delete(`/tasks/${id}`);
 };
 
