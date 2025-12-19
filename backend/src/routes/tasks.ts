@@ -5,7 +5,7 @@ import datastore from '../utils/datastore';
 
 const router = express.Router();
 
-// Get all tasks for a project
+// プロジェクトごとの全タスクを取得
 router.get('/project/:projectId', authMiddleware, (req: AuthRequest, res: Response): void => {
   try {
     const project = datastore.getProjectById(req.params.projectId);
@@ -28,7 +28,7 @@ router.get('/project/:projectId', authMiddleware, (req: AuthRequest, res: Respon
   }
 });
 
-// Get all tasks for the authenticated user
+// 認証済みユーザーの全タスクを取得
 router.get('/', authMiddleware, (req: AuthRequest, res: Response): void => {
   try {
     const tasks = datastore.getAllTasksByUserId(req.userId!);
@@ -39,7 +39,7 @@ router.get('/', authMiddleware, (req: AuthRequest, res: Response): void => {
   }
 });
 
-// Create a new task
+// 新しいタスクを作成
 router.post('/', authMiddleware, (req: AuthRequest, res: Response): void => {
   try {
     const { title, description, status, priority, projectId } = req.body;
@@ -80,7 +80,7 @@ router.post('/', authMiddleware, (req: AuthRequest, res: Response): void => {
   }
 });
 
-// Get a specific task
+// 特定のタスクを取得
 router.get('/:id', authMiddleware, (req: AuthRequest, res: Response): void => {
   try {
     const task = datastore.getTaskById(req.params.id);
@@ -102,7 +102,7 @@ router.get('/:id', authMiddleware, (req: AuthRequest, res: Response): void => {
   }
 });
 
-// Update a task
+// 【修正箇所】タスクの更新処理（カンバン移動時のデータ消失防止）
 router.put('/:id', authMiddleware, (req: AuthRequest, res: Response): void => {
   try {
     const task = datastore.getTaskById(req.params.id);
@@ -118,11 +118,13 @@ router.put('/:id', authMiddleware, (req: AuthRequest, res: Response): void => {
     }
 
     const { title, description, status, priority } = req.body;
+
+    // リクエストで送られてこなかった項目は、元のtaskの値を維持する
     const updatedTask = datastore.updateTask(req.params.id, {
-      title,
-      description,
-      status,
-      priority
+      title: title ?? task.title,
+      description: description ?? task.description,
+      status: status ?? task.status,
+      priority: priority ?? task.priority
     });
 
     res.json(updatedTask);
@@ -132,7 +134,7 @@ router.put('/:id', authMiddleware, (req: AuthRequest, res: Response): void => {
   }
 });
 
-// Delete a task
+// タスクの削除
 router.delete('/:id', authMiddleware, (req: AuthRequest, res: Response): void => {
   try {
     const task = datastore.getTaskById(req.params.id);
