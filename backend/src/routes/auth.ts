@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
@@ -6,7 +6,8 @@ import { pool } from '../utils/db';
 
 const router = express.Router();
 
-router.post('/register', async (req, res) => {
+// 新規登録
+router.post('/register', async (req: any, res: Response) => {
   try {
     const { email, password, name } = req.body;
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -20,11 +21,14 @@ router.post('/register', async (req, res) => {
     const token = jwt.sign({ userId: id }, process.env.JWT_SECRET || 'secret');
     res.status(201).json({ token, user: result.rows[0] });
   } catch (error) {
+    // ここが重要！Renderのログにエラーの正体を出します
+    console.error('Registration Error Details:', error); 
     res.status(500).json({ error: 'Registration failed' });
   }
 });
 
-router.post('/login', async (req, res) => {
+// ログイン
+router.post('/login', async (req: any, res: Response) => {
   try {
     const { email, password } = req.body;
     const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
@@ -38,6 +42,7 @@ router.post('/login', async (req, res) => {
     const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET || 'secret');
     res.json({ token, user: { id: user.id, email: user.email, name: user.name } });
   } catch (error) {
+    console.error('Login Error Details:', error);
     res.status(500).json({ error: 'Login failed' });
   }
 });
