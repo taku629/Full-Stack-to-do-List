@@ -32,8 +32,8 @@ export interface AuthResponse {
   user: User;
 }
 
-// --- APIの基本設定（環境変数を使わず、RenderのURLを直接指定） ---
-// import.meta.env を使わないことで、Vercel側の設定ミスを完全に無視します
+// --- APIの基本設定（RenderのURLを直接指定） ---
+// ここを固定することで、VercelのURLを見に行くミスを物理的に防ぎます
 const API_URL = 'https://full-stack-to-do-list-121l.onrender.com/api';
 
 const api = axios.create({
@@ -50,7 +50,6 @@ api.interceptors.request.use((config) => {
 
 // --- 認証関連 ---
 export const register = async (email: string, password: string, name: string): Promise<AuthResponse> => {
-  // baseURLがRenderを向いているので、ここは相対パスでOK
   const response = await api.post('/auth/register', { email, password, name });
   return response.data;
 };
