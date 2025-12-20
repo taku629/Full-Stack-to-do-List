@@ -5,8 +5,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { pool } from '../utils/db';
 
 const router = express.Router();
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
-// 新規登録
 router.post('/register', async (req: any, res: Response) => {
   try {
     const { email, password, name } = req.body;
@@ -18,16 +18,14 @@ router.post('/register', async (req: any, res: Response) => {
       [id, email, hashedPassword, name]
     );
 
-    const token = jwt.sign({ userId: id }, process.env.JWT_SECRET || 'secret');
+    const token = jwt.sign({ userId: id }, JWT_SECRET);
     res.status(201).json({ token, user: result.rows[0] });
   } catch (error) {
-    // ここが重要！Renderのログにエラーの正体を出します
-    console.error('Registration Error Details:', error); 
+    console.error('Registration Error:', error);
     res.status(500).json({ error: 'Registration failed' });
   }
 });
 
-// ログイン
 router.post('/login', async (req: any, res: Response) => {
   try {
     const { email, password } = req.body;
@@ -35,14 +33,12 @@ router.post('/login', async (req: any, res: Response) => {
     
     if (result.rows.length === 0) return res.status(401).json({ error: 'Invalid credentials' });
     
-    const user = result.rows[0];
-    const isMatch = await bcrypt.compare(password, user.password);
+    const isMatch = await bcrypt.compare(password, result.rows[0].password);
     if (!isMatch) return res.status(401).json({ error: 'Invalid credentials' });
 
-    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET || 'secret');
-    res.json({ token, user: { id: user.id, email: user.email, name: user.name } });
+    const token = jwt.sign({ userId: result.rows[0].id }, JWT_SECRET);
+    res.json({ token, user: { id: result.rows[0].id, email: result.rows[0].email, name: result.rows[0].name } });
   } catch (error) {
-    console.error('Login Error Details:', error);
     res.status(500).json({ error: 'Login failed' });
   }
 });
