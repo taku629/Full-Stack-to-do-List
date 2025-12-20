@@ -1,99 +1,44 @@
-import express, { Request, Response } from 'express';
+import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
-import { query } from '../utils/db'; // データベース接続用の関数をインポート
+import { pool } from '../utils/db';
 
 const router = express.Router();
 
-// ユーザー登録 (Register)
-router.post('/register', async (req: Request, res: Response): Promise<void> => {
+router.post('/register', async (req, res) => {
   try {
     const { email, password, name } = req.body;
-
-    if (!email || !password || !name) {
-      res.status(400).json({ error: 'すべての項目を入力してください' });
-      return;
-    }
-
-    // 1. すでに登録されているメールアドレスかチェック
-    const existingUser = await query('SELECT * FROM users WHERE email = $1', [email]);
-    if (existingUser.rows.length > 0) {
-      res.status(400).json({ error: 'このメールアドレスは既に登録されています' });
-      return;
-    }
-
-    // パスワードのハッシュ化
     const hashedPassword = await bcrypt.hash(password, 10);
-    const userId = uuidv4();
+    const id = uuidv4();
 
-    // 2. データベースにユーザー情報を挿入 (INSERT)
-    await query(
-      'INSERT INTO users (id, name, email, password) VALUES ($1, $2, $3, $4)',
-      [userId, name, email, hashedPassword]
+    const result = await pool.query(
+      'INSERT INTO users (id, email, password, name) VALUES ($1, $2, $3, $4) RETURNING id, email, name',
+      [id, email, hashedPassword, name]
     );
 
-    // トークンの作成
-    const token = jwt.sign(
-      { userId: userId },
-      process.env.JWT_SECRET || 'your-secret-key',
-      { expiresIn: '7d' }
-    );
-
-    res.status(201).json({
-      token,
-      user: { id: userId, email, name }
-    });
+    const token = jwt.sign({ userId: id }, process.env.JWT_SECRET || 'secret');
+    res.status(201).json({ token, user: result.rows[0] });
   } catch (error) {
-    console.error('Registration error:', error);
-    res.status(500).json({ error: 'サーバーエラーが発生しました' });
+    res.status(500).json({ error: 'Registration failed' });
   }
 });
 
-// ログイン (Login)
-router.post('/login', async (req: Request, res: Response): Promise<void> => {
+router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-
-    if (!email || !password) {
-      res.status(400).json({ error: 'メールアドレスとパスワードを入力してください' });
-      return;
-    }
-
-    // 3. データベースからユーザーを検索 (SELECT)
-    const result = await query('SELECT * FROM users WHERE email = $1', [email]);
+    const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    
+    if (result.rows.length === 0) return res.status(401).json({ error: 'Invalid credentials' });
+    
     const user = result.rows[0];
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return res.status(401).json({ error: 'Invalid credentials' });
 
-    if (!user) {
-      res.status(401).json({ error: 'メールアドレスまたはパスワードが正しくありません' });
-      return;
-    }
-
-    // パスワードの照合
-    const isValidPassword = await bcrypt.compare(password, user.password);
-    if (!isValidPassword) {
-      res.status(401).json({ error: 'メールアドレスまたはパスワードが正しくありません' });
-      return;
-    }
-
-    // トークンの作成
-    const token = jwt.sign(
-      { userId: user.id },
-      process.env.JWT_SECRET || 'your-secret-key',
-      { expiresIn: '7d' }
-    );
-
-    res.json({
-      token,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name
-      }
-    });
+    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET || 'secret');
+    res.json({ token, user: { id: user.id, email: user.email, name: user.name } });
   } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ error: 'サーバーエラーが発生しました' });
+    res.status(500).json({ error: 'Login failed' });
   }
 });
 
