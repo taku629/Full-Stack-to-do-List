@@ -1,13 +1,18 @@
 import { Pool } from 'pg';
 import dotenv from 'dotenv';
 
+// 環境変数を読み込む設定
 dotenv.config();
 
-// RenderのPostgreSQLに接続するための設定
+// デバッグ用ログ：URLが空っぽならエラーを出す（RenderのLogsで見れます）
+if (!process.env.DATABASE_URL) {
+  console.error("❌ ERROR: DATABASE_URL is not defined! Check Render settings.");
+}
+
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
-    rejectUnauthorized: false // Render接続に必須の設定
+    rejectUnauthorized: false // Renderのデータベース接続に必須
   }
 });
 
