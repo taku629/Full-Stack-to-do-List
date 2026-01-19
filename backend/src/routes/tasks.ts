@@ -1,8 +1,9 @@
 import express, { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import { authMiddleware, AuthRequest } from '../middleware/auth';
-import { pool } from '../utils/db';
-
+// 修正前: import { ... } from '../middleware/auth';
+import { authMiddleware, AuthRequest } from '../middleware/auth.js';
+// 修正前: import { pool } from '../utils/db';
+import { pool } from '../utils/db.js';
 const router = express.Router();
 
 router.get('/project/:projectId', authMiddleware, async (req: AuthRequest, res: Response) => {

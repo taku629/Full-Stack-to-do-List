@@ -2,11 +2,10 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import http from 'http';
-import authRoutes from './routes/auth';
-import projectRoutes from './routes/projects';
-import taskRoutes from './routes/tasks';
-import { setupWebSocket } from './utils/websocket';
-
+import authRoutes from './routes/auth.js';
+import projectRoutes from './routes/projects.js';
+import taskRoutes from './routes/tasks.js';
+import { setupWebSocket } from './utils/websocket.js';
 dotenv.config();
 const app = express();
 const server = http.createServer(app);

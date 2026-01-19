@@ -2,7 +2,8 @@ import express, { Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
-import { pool } from '../utils/db';
+// 修正前: import { pool } from '../utils/db';
+import { pool } from '../utils/db.js';
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
