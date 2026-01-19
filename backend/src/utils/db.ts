@@ -5,7 +5,7 @@ dotenv.config();
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
-    // セルフサイン証明書（独自の証明書）を許可する設定
+    // この一行を追加：証明書のチェックを緩めて接続を許可する
     rejectUnauthorized: false
   }
 });
