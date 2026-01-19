@@ -7,24 +7,26 @@ export interface User {
   name: string;
 }
 
+// データベースの列名（snake_case）に合わせて修正
 export interface Project {
   id: string;
   name: string;
   description: string;
-  userId: string;
-  createdAt: string;
+  user_id: string;    // userId -> user_id
+  created_at: string; // createdAt -> created_at
 }
 
+// データベースの列名（snake_case）に合わせて修正
 export interface Task {
   id: string;
   title: string;
   description: string;
   status: 'todo' | 'in-progress' | 'done';
   priority: 'low' | 'medium' | 'high';
-  projectId: string;
-  userId: string;
-  createdAt: string;
-  updatedAt: string;
+  project_id: string; // projectId -> project_id (Dashboard.tsxのエラーを直す箇所)
+  user_id: string;    // userId -> user_id
+  created_at: string; // createdAt -> created_at
+  updated_at: string; // updatedAt -> updated_at
 }
 
 export interface AuthResponse {
@@ -33,7 +35,6 @@ export interface AuthResponse {
 }
 
 // --- APIの基本設定（RenderのURLを直接指定） ---
-// ここを固定することで、VercelのURLを見に行くミスを物理的に防ぎます
 const API_URL = 'https://full-stack-to-do-list-121l.onrender.com/api';
 
 const api = axios.create({
@@ -86,6 +87,8 @@ export const getTasks = async (): Promise<Task[]> => {
 };
 
 export const getTasksByProject = async (projectId: string): Promise<Task[]> => {
+  // バックエンドのルートに合わせてここも修正が必要な場合がありますが、
+  // 一旦型の不整合を直すために URL パラメータとして送ります
   const response = await api.get(`/tasks/project/${projectId}`);
   return response.data;
 };

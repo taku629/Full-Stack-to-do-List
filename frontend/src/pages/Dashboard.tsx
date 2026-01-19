@@ -61,6 +61,7 @@ const Dashboard: React.FC = () => {
       setShowProjectModal(false);
     } catch (error) {
       console.error('Failed to create project:', error);
+      alert('プロジェクトの作成に失敗しました');
     }
   };
 
@@ -76,13 +77,21 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  // タスク作成処理
   const handleCreateTask = async (taskData: Partial<Task>) => {
     try {
-      const newTask = await api.createTask({ ...taskData, projectId: selectedProject! });
+      // データベースの列名に合わせ、projectId を project_id に修正
+      const newTask = await api.createTask({ 
+        ...taskData, 
+        project_id: selectedProject! 
+      });
       setTasks([...tasks, newTask]);
       setShowTaskModal(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to create task:', error);
+      // エラーメッセージをユーザーに表示
+      alert(`タスク作成に失敗しました: ${error.response?.data?.message || 'サーバーエラー'}`);
+      throw error; // Modal側でエラーを検知できるように再スローする
     }
   };
 
@@ -100,7 +109,7 @@ const Dashboard: React.FC = () => {
       await api.deleteTask(id);
       setTasks(tasks.filter((t) => t.id !== id));
     } catch (error) {
-      console.error('Failed to delete task:', error);
+      console.error('Failed to deleteTask:', error);
     }
   };
 
@@ -171,6 +180,7 @@ const Dashboard: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* To Do Column */}
               <div className="bg-white rounded-lg shadow p-4">
                 <h3 className="font-bold text-lg mb-4 text-gray-700 border-b pb-2">
                   To Do ({todoTasks.length})
@@ -187,6 +197,7 @@ const Dashboard: React.FC = () => {
                 </div>
               </div>
 
+              {/* In Progress Column */}
               <div className="bg-white rounded-lg shadow p-4">
                 <h3 className="font-bold text-lg mb-4 text-gray-700 border-b pb-2">
                   In Progress ({inProgressTasks.length})
@@ -203,6 +214,7 @@ const Dashboard: React.FC = () => {
                 </div>
               </div>
 
+              {/* Done Column */}
               <div className="bg-white rounded-lg shadow p-4">
                 <h3 className="font-bold text-lg mb-4 text-gray-700 border-b pb-2">
                   Done ({doneTasks.length})
